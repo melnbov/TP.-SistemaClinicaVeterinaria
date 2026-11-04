@@ -35,26 +35,20 @@ public class MenuConsola {
         try {
             int opcion;
             do {
-                System.out.println("\n=== CLÍNICA VETERINARIA PATITAS ===");
-                System.out.println("1. Dueños y mascotas");
-                System.out.println("2. Turnos");
-                System.out.println("3. Atención clínica (consultas)");
-                System.out.println("4. Stock de medicamentos e insumos");
-                System.out.println("5. Facturación");
-                System.out.println("6. Vacunas y recordatorios");
-                System.out.println("7. Reportes");
-                System.out.println("8. Veterinarios");
-                System.out.println("0. Salir");
-                opcion = leerEntero("Opción: ");
+                System.out.println("\nCLÍNICA VETERINARIA PATITAS");
+                System.out.println("Cuidamos a los que más querés");
+                System.out.println("\n  ¿Cómo querés ingresar?\n");
+                System.out.println("  1. Dueño de mascota");
+                System.out.println("  2. Administrador");
+                System.out.println("  3. Recepcionista");
+                System.out.println("  4. Veterinario");
+                System.out.println("  0. Salir");
+                opcion = leerEntero("\n  Opción: ");
                 switch (opcion) {
-                    case 1: menuDuenosMascotas(); break;
-                    case 2: menuTurnos(); break;
-                    case 3: menuAtencion(); break;
-                    case 4: menuStock(); break;
-                    case 5: menuFacturacion(); break;
-                    case 6: menuVacunas(); break;
-                    case 7: menuReportes(); break;
-                    case 8: menuVeterinarios(); break;
+                    case 1: accesoDueno(); break;
+                    case 2: ingresoPersonal(Administrador.class, "administrador"); break;
+                    case 3: ingresoPersonal(Recepcionista.class, "recepcionista"); break;
+                    case 4: ingresoPersonal(Veterinario.class, "veterinario"); break;
                     case 0: System.out.println("Datos guardados. ¡Hasta luego!"); break;
                     default: System.out.println("Opción incorrecta.");
                 }
@@ -62,6 +56,169 @@ public class MenuConsola {
         } catch (FinDeEntrada ex) {
             System.out.println("\nFin de la entrada. Los datos ya están guardados.");
         }
+    }
+
+    // ------------------------------------------------------------------ ingreso por perfil
+
+    /** Acceso de dueños: pueden ingresar con su documento o registrarse por primera vez. */
+    private void accesoDueno() {
+        int op;
+        do {
+            System.out.println("\n--- Dueños de mascotas ---");
+            System.out.println("1. Ingresar al sistema\n2. Registrarme\n0. Volver");
+            op = leerEntero("Opción: ");
+            switch (op) {
+                case 1: ingresoDueno(); break;
+                case 2: registroDueno(); break;
+                case 0: break;
+                default: System.out.println("Opción incorrecta.");
+            }
+        } while (op != 0);
+    }
+
+    private void ingresoDueno() {
+        String documento = leerTexto("Tu documento (vacío para volver): ");
+        if (documento.isEmpty()) return;
+        Dueno dueno = controlador.buscarDueno(documento);
+        if (dueno == null) {
+            System.out.println("No encontramos ese documento. Si es tu primera vez, elegí «Registrarme».");
+            return;
+        }
+        System.out.println("\n¡Hola, " + dueno.getNombre() + "!");
+        menuDueno(dueno);
+    }
+
+    /** Registro de un dueño nuevo; al terminar entra directamente a su espacio. */
+    private void registroDueno() {
+        Dueno[] nuevo = new Dueno[1];
+        ejecutar(() -> nuevo[0] = altaDueno(true));
+        if (nuevo[0] != null) {
+            System.out.println("\n¡Bienvenido/a, " + nuevo[0].getNombre() + "!");
+            menuDueno(nuevo[0]);
+        }
+    }
+
+    /** Ingreso del personal: el documento debe pertenecer a alguien con el perfil elegido. */
+    private void ingresoPersonal(Class<? extends Personal> perfil, String nombrePerfil) {
+        System.out.println("\n--- Ingreso de " + nombrePerfil + " ---");
+        String documento = leerTexto("Documento (vacío para volver): ");
+        if (documento.isEmpty()) return;
+        Personal p = controlador.buscarPersonal(documento);
+        if (p == null || !perfil.isInstance(p)) {
+            System.out.println("Ese documento no corresponde a un " + nombrePerfil + " de la clínica.");
+            return;
+        }
+        System.out.println("\nSesión iniciada: " + p.getNombreCompleto() + " (" + p.getRol() + ")");
+        if (p instanceof Recepcionista) menuRecepcion();
+        else if (p instanceof Veterinario) menuVeterinario((Veterinario) p);
+        else menuAdministracion();
+    }
+
+    // ------------------------------------------------------------------ menús por perfil
+
+    private void menuRecepcion() {
+        int op;
+        do {
+            System.out.println("\n=== Recepción ===");
+            System.out.println("1. Clientes y mascotas\n2. Turnos\n3. Cobros y facturas\n4. Vacunas y recordatorios\n0. Cerrar sesión");
+            op = leerEntero("Opción: ");
+            switch (op) {
+                case 1: menuDuenosMascotas(); break;
+                case 2: menuTurnos(); break;
+                case 3: menuFacturacion(); break;
+                case 4: menuVacunas(); break;
+                case 0: break;
+                default: System.out.println("Opción incorrecta.");
+            }
+        } while (op != 0);
+    }
+
+    private void menuVeterinario(Veterinario vet) {
+        System.out.println("\n=== Consultorio de " + vet.getNombreCompleto() + " ===");
+        mostrar(turnosProgramadosDe(vet));
+        menuAtencion(vet);
+    }
+
+    private void menuAdministracion() {
+        int op;
+        do {
+            System.out.println("\n=== Administración ===");
+            System.out.println("1. Stock de medicamentos e insumos\n2. Reportes\n3. Veterinarios\n0. Cerrar sesión");
+            op = leerEntero("Opción: ");
+            switch (op) {
+                case 1: menuStock(); break;
+                case 2: menuReportes(); break;
+                case 3: menuVeterinarios(); break;
+                case 0: break;
+                default: System.out.println("Opción incorrecta.");
+            }
+        } while (op != 0);
+    }
+
+    private void menuDueno(Dueno dueno) {
+        int op;
+        do {
+            System.out.println("\n=== Mi espacio ===");
+            System.out.println("1. Solicitar turno\n2. Mis turnos\n3. Cancelar o reprogramar un turno\n4. Mis mascotas\n5. Agregar una mascota\n0. Volver al inicio");
+            op = leerEntero("Opción: ");
+            switch (op) {
+                case 1: ejecutar(() -> solicitarTurno(dueno)); break;
+                case 2: mostrar(turnosDe(dueno, false)); break;
+                case 3: ejecutar(() -> modificarTurno(dueno)); break;
+                case 4: mostrar(dueno.getMascotas()); break;
+                case 5: ejecutar(() -> registrarMascotaDe(dueno)); break;
+                case 0: break;
+                default: System.out.println("Opción incorrecta.");
+            }
+        } while (op != 0);
+    }
+
+    // ------------------------------------------------------------------ acciones del dueño
+
+    private void solicitarTurno(Dueno dueno) throws ReglaNegocioException {
+        Mascota m = elegir("Tu mascota", dueno.getMascotas());
+        if (m == null) return;
+        Veterinario v = elegir("Veterinario", controlador.listarVeterinarios());
+        if (v == null) return;
+        System.out.println("Tipo: 1. Consulta general (30')  2. Vacunación (15')  3. Cirugía (120')");
+        int t = leerEntero("Opción: ");
+        if (t < 1 || t > 3) { System.out.println("Tipo incorrecto."); return; }
+        if (controlador.requiereSena(dueno)) {
+            System.out.println("Tenés 3 ausencias seguidas: para sacar un turno primero tenés que abonar una seña en recepción.");
+            return;
+        }
+        LocalDateTime fecha = elegirFechaHora(v, TipoAtencion.values()[t - 1], null);
+        if (fecha == null) return;
+        Turno turno = controlador.asignarTurno(m, v, fecha, TipoAtencion.values()[t - 1], false);
+        System.out.println("¡Turno confirmado!\n  " + turno);
+    }
+
+    private void modificarTurno(Dueno dueno) throws ReglaNegocioException {
+        Turno t = elegir("Tu turno", turnosDe(dueno, true));
+        if (t == null) return;
+        System.out.println("1. Cancelar  2. Reprogramar");
+        int op = leerEntero("Opción: ");
+        if (op == 1) {
+            double cargo = controlador.cancelarTurno(t.getNumero());
+            if (cargo > 0) System.out.printf("Turno cancelado con menos de 2 h de anticipación: cargo del 20 %% = $%.2f%n", cargo);
+            else System.out.println("Turno cancelado sin cargo.");
+        } else if (op == 2) {
+            LocalDateTime nueva = elegirFechaHora(t.getVeterinario(), t.getAtencion(), t);
+            if (nueva == null) return;
+            controlador.reprogramarTurno(t.getNumero(), nueva);
+            System.out.println("Turno reprogramado.");
+        }
+    }
+
+    /** Turnos de las mascotas del dueño; con soloProgramados se omiten los ya atendidos o cancelados. */
+    private List<Turno> turnosDe(Dueno dueno, boolean soloProgramados) {
+        List<Turno> r = new java.util.ArrayList<>();
+        for (Turno t : controlador.listarTurnos()) {
+            if (!dueno.equals(t.getMascota().getDuenoActual())) continue;
+            if (soloProgramados && t.getEstado() != EstadoTurno.PROGRAMADO) continue;
+            r.add(t);
+        }
+        return r;
     }
 
     // ------------------------------------------------------------------ submenús
@@ -95,7 +252,7 @@ public class MenuConsola {
                 case 2: ejecutar(this::asignarUrgencia); break;
                 case 3: ejecutar(this::reprogramarTurno); break;
                 case 4: ejecutar(this::cancelarTurno); break;
-                case 5: ejecutar(() -> { controlador.registrarAusencia(leerEntero("N° de turno: ")); System.out.println("Ausencia registrada."); }); break;
+                case 5: ejecutar(this::registrarAusencia); break;
                 case 6: mostrar(controlador.listarTurnos()); break;
                 case 0: break;
                 default: System.out.println("Opción incorrecta.");
@@ -103,14 +260,14 @@ public class MenuConsola {
         } while (op != 0);
     }
 
-    private void menuAtencion() {
+    private void menuAtencion(Veterinario vet) {
         int op;
         do {
             System.out.println("\n--- Atención clínica ---");
-            System.out.println("1. Atender turno (abrir consulta)\n2. Registrar peso del día\n3. Registrar diagnóstico\n4. Indicar tratamiento\n5. Aplicar vacuna\n6. Registrar insumo utilizado\n7. Confirmar consulta (descuenta stock y factura)\n8. Nota rectificatoria\n9. Ver historia clínica de una mascota\n0. Volver");
+            System.out.println("1. Atender turno (abrir consulta)\n2. Registrar peso del día\n3. Registrar diagnóstico\n4. Indicar tratamiento\n5. Aplicar vacuna\n6. Registrar insumo utilizado\n7. Confirmar consulta (descuenta stock y factura)\n8. Nota rectificatoria\n9. Ver historia clínica de una mascota\n0. Cerrar sesión");
             op = leerEntero("Opción: ");
             switch (op) {
-                case 1: ejecutar(this::atenderTurno); break;
+                case 1: ejecutar(() -> atenderTurno(vet)); break;
                 case 2: ejecutar(() -> { Consulta c = elegirConsultaAbierta(); if (c != null) controlador.registrarPeso(c, leerDecimal("Peso del día (kg): ")); }); break;
                 case 3: ejecutar(() -> { Consulta c = elegirConsultaAbierta(); if (c != null) controlador.registrarDiagnostico(c, leerTexto("Diagnóstico: "), leerTexto("Observaciones (opcional): ")); }); break;
                 case 4: ejecutar(this::indicarTratamiento); break;
@@ -210,9 +367,18 @@ public class MenuConsola {
     // ------------------------------------------------------------------ acciones
 
     private void registrarDueno() throws ReglaNegocioException {
+        altaDueno(false);
+    }
+
+    /** Pide los datos de un dueño nuevo. El documento se pide primero y se valida en el acto. */
+    private Dueno altaDueno(boolean autoregistro) throws ReglaNegocioException {
+        String documento = leerTexto("Documento: ");
+        if (documento.isEmpty()) throw new ReglaNegocioException("El documento es obligatorio");
+        if (controlador.buscarDueno(documento) != null) {
+            throw new ReglaNegocioException("Ya existe un dueño con ese documento" + (autoregistro ? ": ingresá con «Ingresar al sistema»." : "."));
+        }
         String nombre = leerTexto("Nombre: ");
         String apellido = leerTexto("Apellido: ");
-        String documento = leerTexto("Documento: ");
         String telefono = leerTexto("Teléfono: ");
         String email = leerTexto("Email: ");
         PlanSalud plan = null;
@@ -221,11 +387,16 @@ public class MenuConsola {
         }
         Dueno d = controlador.registrarDueno(nombre, apellido, documento, telefono, email, plan);
         System.out.println("Dueño registrado: " + d);
+        return d;
     }
 
     private void registrarMascota() throws ReglaNegocioException {
         Dueno dueno = elegir("Dueño", controlador.listarDuenos());
         if (dueno == null) return;
+        registrarMascotaDe(dueno);
+    }
+
+    private void registrarMascotaDe(Dueno dueno) throws ReglaNegocioException {
         System.out.println("Especie: 1. Perro  2. Gato  3. Ave  4. Conejo");
         int esp = leerEntero("Opción: ");
         String nombre = leerTexto("Nombre: ");
@@ -268,12 +439,13 @@ public class MenuConsola {
         System.out.println("Tipo: 1. Consulta general (30')  2. Vacunación (15')  3. Cirugía (120')");
         int t = leerEntero("Opción: ");
         if (t < 1 || t > 3) { System.out.println("Tipo incorrecto."); return; }
-        LocalDateTime fecha = leerFechaHora("Fecha y hora (aaaa-mm-dd hh:mm): ");
         boolean sena = false;
         if (controlador.requiereSena(m.getDuenoActual())) {
             System.out.println("El dueño tiene 3 ausencias seguidas: debe pagar una seña.");
             sena = leerSiNo("¿Abonó la seña?");
         }
+        LocalDateTime fecha = elegirFechaHora(v, TipoAtencion.values()[t - 1], null);
+        if (fecha == null) return;
         Turno turno = controlador.asignarTurno(m, v, fecha, TipoAtencion.values()[t - 1], sena);
         System.out.println("Turno asignado: " + turno);
     }
@@ -291,19 +463,33 @@ public class MenuConsola {
     }
 
     private void reprogramarTurno() throws ReglaNegocioException {
-        controlador.reprogramarTurno(leerEntero("N° de turno: "), leerFechaHora("Nueva fecha y hora (aaaa-mm-dd hh:mm): "));
+        Turno t = elegir("Turno a reprogramar", turnosProgramados());
+        if (t == null) return;
+        LocalDateTime nueva = elegirFechaHora(t.getVeterinario(), t.getAtencion(), t);
+        if (nueva == null) return;
+        controlador.reprogramarTurno(t.getNumero(), nueva);
         System.out.println("Turno reprogramado.");
     }
 
     private void cancelarTurno() throws ReglaNegocioException {
-        double cargo = controlador.cancelarTurno(leerEntero("N° de turno: "));
+        Turno t = elegir("Turno a cancelar", turnosProgramados());
+        if (t == null) return;
+        double cargo = controlador.cancelarTurno(t.getNumero());
         if (cargo > 0) System.out.printf("Turno cancelado con menos de 2 h de anticipación: cargo del 20 %% = $%.2f%n", cargo);
         else System.out.println("Turno cancelado sin cargo.");
     }
 
-    private void atenderTurno() throws ReglaNegocioException {
-        int numero = leerEntero("N° de turno: ");
-        Consulta c = controlador.atenderTurno(numero, leerTexto("Motivo de la consulta: "));
+    private void registrarAusencia() throws ReglaNegocioException {
+        Turno t = elegir("Turno ausente", turnosProgramados());
+        if (t == null) return;
+        controlador.registrarAusencia(t.getNumero());
+        System.out.println("Ausencia registrada.");
+    }
+
+    private void atenderTurno(Veterinario vet) throws ReglaNegocioException {
+        Turno t = elegir("Tus turnos programados", turnosProgramadosDe(vet));
+        if (t == null) return;
+        Consulta c = controlador.atenderTurno(t.getNumero(), leerTexto("Motivo de la consulta: "));
         System.out.println("Consulta abierta: " + c + " (" + c.getMascota().getNombre() + ")");
     }
 
@@ -401,6 +587,59 @@ public class MenuConsola {
     }
 
     // ------------------------------------------------------------------ utilidades de interfaz
+
+    private static final String[] DIAS = {"lun", "mar", "mié", "jue", "vie", "sáb", "dom"};
+    private static final java.time.format.DateTimeFormatter FORMATO_HORA = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+
+    private List<Turno> turnosProgramados() {
+        List<Turno> r = new java.util.ArrayList<>();
+        for (Turno t : controlador.listarTurnos()) if (t.getEstado() == EstadoTurno.PROGRAMADO) r.add(t);
+        return r;
+    }
+
+    private List<Turno> turnosProgramadosDe(Veterinario vet) {
+        List<Turno> r = new java.util.ArrayList<>();
+        for (Turno t : controlador.listarTurnosDe(vet)) if (t.getEstado() == EstadoTurno.PROGRAMADO) r.add(t);
+        return r;
+    }
+
+    /**
+     * Elige día y horario sin escribir fechas: primero los días en que atiende el veterinario (próximos 14 días),
+     * después los horarios libres de ese día, mostrando también los ya reservados.
+     * @param excluir turno que se está reprogramando (su horario actual cuenta como libre); puede ser null
+     * @return el horario elegido o null si se cancela
+     */
+    private LocalDateTime elegirFechaHora(Veterinario v, TipoAtencion tipo, Turno excluir) {
+        while (true) {
+            List<LocalDate> dias = controlador.diasDeAtencion(v, 14);
+            if (dias.isEmpty()) { System.out.println("El veterinario no tiene días de atención cargados."); return null; }
+            System.out.println("\nDías de atención de " + v.getNombreCompleto() + ":");
+            for (int i = 0; i < dias.size(); i++) {
+                LocalDate d = dias.get(i);
+                System.out.printf("  %2d. %s %02d/%02d%n", i + 1, DIAS[d.getDayOfWeek().getValue() - 1], d.getDayOfMonth(), d.getMonthValue());
+            }
+            int n = leerEntero("Elegí el día (0 para cancelar): ");
+            if (n == 0) return null;
+            if (n < 1 || n > dias.size()) { System.out.println("Opción incorrecta."); continue; }
+            LocalDate dia = dias.get(n - 1);
+
+            List<Turno> reservados = controlador.turnosReservados(v, dia);
+            System.out.println("\nHorarios reservados ese día:");
+            boolean hay = false;
+            for (Turno t : reservados) {
+                if (t == excluir) continue;
+                System.out.println("  " + t.getInicio().format(FORMATO_HORA) + " a " + t.getFin().format(FORMATO_HORA));
+                hay = true;
+            }
+            if (!hay) System.out.println("  (ninguno)");
+            List<LocalDateTime> libres = controlador.horariosLibres(v, dia, tipo, excluir);
+            if (libres.isEmpty()) { System.out.println("No quedan horarios libres ese día. Probá con otro."); continue; }
+            System.out.println("Horarios disponibles (" + tipo.getDuracionMinutos() + " min):");
+            for (int i = 0; i < libres.size(); i++) System.out.printf("  %2d. %s%n", i + 1, libres.get(i).format(FORMATO_HORA));
+            int h = leerEntero("Elegí el horario (0 para elegir otro día): ");
+            if (h >= 1 && h <= libres.size()) return libres.get(h - 1);
+        }
+    }
 
     private Consulta elegirConsultaAbierta() throws ReglaNegocioException {
         List<Consulta> abiertas = controlador.consultasAbiertas();

@@ -127,7 +127,11 @@ public class ControladorClinica {
         guardar();
         return v;
     }
-
+    /** Busca a un integrante del personal por documento (para el ingreso al sistema). */
+    public Personal buscarPersonal(String documento) {
+        for (Personal p : datos.getPersonal()) if (p.getDocumento().equals(documento)) return p;
+        return null;
+    }
     public List<Veterinario> listarVeterinarios() {
         List<Veterinario> r = new ArrayList<>();
         for (Personal p : datos.getPersonal()) if (p instanceof Veterinario) r.add((Veterinario) p);
@@ -167,7 +171,44 @@ public class ControladorClinica {
         datos.getServicioTurnos().registrarAusencia(numero);
         guardar();
     }
+    /** Próximos días (a partir de hoy) en los que el veterinario atiende. */
+    public List<LocalDate> diasDeAtencion(Veterinario v, int cantidadDias) {
+        List<LocalDate> r = new ArrayList<>();
+        LocalDate dia = LocalDate.now();
+        for (int i = 0; i < cantidadDias; i++, dia = dia.plusDays(1)) {
+            DiaSemana ds = DiaSemana.desdeFecha(dia.getDayOfWeek());
+            for (HorarioAtencion h : v.getHorarios()) {
+                if (h.getDiaSemana() == ds) { r.add(dia); break; }
+            }
+        }
+        return r;
+    }
 
+    /** Horarios libres de un veterinario en un día para una atención (grilla de 30', o 15' si la atención dura 15'). */
+    public List<LocalDateTime> horariosLibres(Veterinario v, LocalDate dia, TipoAtencion tipo, Turno excluir) {
+        List<LocalDateTime> r = new ArrayList<>();
+        int paso = Math.min(tipo.getDuracionMinutos(), 30);
+        LocalDateTime ahora = LocalDateTime.now();
+        for (LocalDateTime t = dia.atStartOfDay(); t.toLocalDate().equals(dia); t = t.plusMinutes(paso)) {
+            if (!t.isAfter(ahora) || !v.estaDisponible(t, tipo.getDuracionMinutos())) continue;
+            LocalDateTime fin = t.plusMinutes(tipo.getDuracionMinutos());
+            boolean ocupado = false;
+            for (Turno e : turnosReservados(v, dia)) {
+                if (e != excluir && t.isBefore(e.getFin()) && e.getInicio().isBefore(fin)) { ocupado = true; break; }
+            }
+            if (!ocupado) r.add(t);
+        }
+        return r;
+    }
+
+    /** Turnos programados (reservados) de un veterinario en un día, ordenados por hora. */
+    public List<Turno> turnosReservados(Veterinario v, LocalDate dia) {
+        List<Turno> r = new ArrayList<>();
+        for (Turno t : listarTurnosDe(v)) {
+            if (t.getEstado() == EstadoTurno.PROGRAMADO && t.getInicio().toLocalDate().equals(dia)) r.add(t);
+        }
+        return r;
+    }
     public boolean requiereSena(Dueno dueno) { return datos.getServicioTurnos().requiereSena(dueno); }
     public List<Turno> listarTurnos() { return datos.getServicioTurnos().listarTurnos(); }
     public List<Turno> listarTurnosDe(Veterinario v) { return datos.getServicioTurnos().listarTurnosPorVeterinario(v); }
