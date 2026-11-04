@@ -1,7 +1,7 @@
 
 package modelo.entidades;
 
-public abstract class Personal{
+public abstract class Personal implements java.io.Serializable {
     //atributos
     private String nombre;
     private String apellido;

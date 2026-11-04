@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class Mascota {
+public abstract class Mascota implements java.io.Serializable {
 
     private final String nombre;
     private final String raza;
@@ -108,7 +108,12 @@ public abstract class Mascota {
 
     public Consulta registrarConsulta(Veterinario veterinario, String motivo,
                                       LocalDate fecha) {
-        Consulta consulta = new Consulta(this, veterinario, motivo, fecha);
+        return registrarConsulta(veterinario, motivo, fecha, TipoAtencion.CONSULTA_GENERAL);
+    }
+
+    public Consulta registrarConsulta(Veterinario veterinario, String motivo,
+                                      LocalDate fecha, TipoAtencion tipo) {
+        Consulta consulta = new Consulta(this, veterinario, motivo, fecha, tipo);
         historiaClinica.add(consulta);
         return consulta;
     }

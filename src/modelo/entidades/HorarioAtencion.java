@@ -3,7 +3,7 @@ package modelo.entidades;
 
 import java.time.LocalTime;
 
-public class HorarioAtencion {
+public class HorarioAtencion implements java.io.Serializable {
     private final DiaSemana diaSemana;
     private final LocalTime horaInicio;
     private final LocalTime horaFin;

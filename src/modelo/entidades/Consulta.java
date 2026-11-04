@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Consulta {
+public class Consulta implements java.io.Serializable {
 
     private static final AtomicInteger SECUENCIA = new AtomicInteger(1);
 
@@ -22,13 +22,15 @@ public class Consulta {
     private String diagnostico;
     private String observaciones;
     private boolean cerrada;
+    private final TipoAtencion tipoAtencion;
+    private final List<InsumoUtilizado> insumos = new ArrayList<>();
 
     private final List<Tratamiento> tratamientos = new ArrayList<>();
     private final List<VacunaAplicada> vacunasAplicadas = new ArrayList<>();
     private final List<NotaRectificatoria> notas = new ArrayList<>();
 
     Consulta(Mascota mascota, Veterinario veterinario,
-             String motivo, LocalDate fecha) {
+             String motivo, LocalDate fecha, TipoAtencion tipoAtencion) {
 
         if (mascota == null) {
             throw new IllegalArgumentException("La mascota es obligatoria");
@@ -49,6 +51,7 @@ public class Consulta {
                     "La fecha de la consulta no es válida");
         }
 
+        this.tipoAtencion = tipoAtencion == null ? TipoAtencion.CONSULTA_GENERAL : tipoAtencion;
         this.numero = SECUENCIA.getAndIncrement();
         this.mascota = mascota;
         this.veterinario = veterinario;
@@ -148,6 +151,27 @@ public class Consulta {
 
         vacunasAplicadas.add(aplicada);
         return aplicada;
+    }
+
+    /** Registra un insumo usado. No toca el stock: eso ocurre al confirmar la consulta. */
+    public InsumoUtilizado agregarInsumo(Producto producto, int cantidad)
+            throws ReglaNegocioException {
+        asegurarAbierta();
+        try {
+            InsumoUtilizado uso = new InsumoUtilizado(producto, cantidad);
+            insumos.add(uso);
+            return uso;
+        } catch (IllegalArgumentException ex) {
+            throw new ReglaNegocioException(ex.getMessage());
+        }
+    }
+
+    public TipoAtencion getTipoAtencion() {
+        return tipoAtencion;
+    }
+
+    public List<InsumoUtilizado> getInsumos() {
+        return Collections.unmodifiableList(insumos);
     }
 
     public void cerrar() throws ReglaNegocioException {

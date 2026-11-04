@@ -17,7 +17,8 @@ public class ServicioStock implements Serializable {
         for(Producto p:productos)
             if(p.getCodigo().equalsIgnoreCase(codigo))
                 return p;
-        return null;}
+        return null;
+    }
     public void ingresarLote(String codigo,LoteProducto lote){
         Producto p=buscarProducto(codigo);
         if(p==null)
@@ -44,6 +45,11 @@ public class ServicioStock implements Serializable {
             restante-=tomar;
         }
         return usos;
+    }
+    /** @return true si hay al menos {@code cantidad} unidades vigentes (no vencidas) del producto */
+    public boolean hayStock(String codigo,int cantidad){
+        Producto p=buscarProducto(codigo);
+        return p!=null&&cantidad>0&&p.calcularStock()>=cantidad;
     }
     public List<Producto> consultarStockBajo(){
         List<Producto> r=new ArrayList<>();

@@ -3,7 +3,7 @@ package modelo.entidades;
 
 import java.time.LocalDateTime;
 
-public class Turno implements Comparable<Turno>{
+public class Turno implements Comparable<Turno>, java.io.Serializable {
     private static int siguienteNumero=1;
     
     private final int numero;
@@ -14,6 +14,7 @@ public class Turno implements Comparable<Turno>{
     private EstadoTurno estado;
     private final boolean esUrgencia;
     private final int duracionMinutos;
+    private double cargoCancelacion; // 20 % si se cancela con menos de 2 h de anticipación
 
     public Turno(Mascota mascota, Veterinario veterinario, LocalDateTime fechaHora, TipoAtencion atencion, boolean esUrgencia) {
         if (mascota==null || veterinario == null || fechaHora==null || atencion==null){
@@ -77,6 +78,22 @@ public class Turno implements Comparable<Turno>{
         this.fechaHora = nuevaFechaHora;
     }
 
+    public double getCargoCancelacion() {
+        return cargoCancelacion;
+    }
+
+    /** Cancela el turno registrando el cargo (puede ser 0). */
+    public void cancelar(double cargo) {
+        if (cargo < 0) throw new IllegalArgumentException("El cargo no puede ser negativo");
+        this.cargoCancelacion = cargo;
+        this.estado = EstadoTurno.CANCELADO;
+    }
+
+    /** Vuelve a un horario anterior sin validaciones (solo para deshacer un desplazamiento fallido). */
+    public void restaurarFechaHora(LocalDateTime anterior) {
+        this.fechaHora = anterior;
+    }
+
     public void cambiarEstado(EstadoTurno nuevoEstado) {
         if (nuevoEstado == null) {
             throw new IllegalArgumentException("El estado no puede ser nulo");
@@ -96,7 +113,8 @@ public class Turno implements Comparable<Turno>{
     
     @Override
     public String toString() {
-        return "Turno N° " + numero + " | " + fechaHora + " | " + atencion + " | "+veterinario.getNombreCompleto() + " | " + estado;
+        return "Turno N° " + numero + " | " + fechaHora + " | " + atencion + (esUrgencia ? " (URGENCIA)" : "")
+                + " | " + mascota.getNombre() + " | Dr/a. " + veterinario.getNombreCompleto() + " | " + estado;
     }
     
 }

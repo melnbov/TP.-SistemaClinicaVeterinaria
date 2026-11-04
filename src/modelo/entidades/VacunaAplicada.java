@@ -2,7 +2,7 @@ package modelo.entidades;
 
 import java.time.LocalDate;
 
-public class VacunaAplicada {
+public class VacunaAplicada implements java.io.Serializable {
 
     private static final int DIAS_AVISO_PREVIO = 7;
     private static final int DIAS_PARA_VENCER = 30;

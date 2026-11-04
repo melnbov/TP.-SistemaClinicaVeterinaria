@@ -40,8 +40,22 @@ public abstract class Producto implements Serializable {
         lotes.remove(lote);
     }
     public boolean tieneStockBajo() {
-        return calcularStock() < stockMinimo;
+        // "Al llegar a ese valor se genera una alerta": incluye el caso de igualdad.
+        return calcularStock() <= stockMinimo;
     }
+    /**
+     * Precio de venta: SUPUESTO del grupo = costo del lote que vence primero (con stock) + 50 % de margen.
+     */
+    public double getPrecioVenta() {
+        LoteProducto elegido = null;
+        for (LoteProducto l : lotes) {
+            if (l.estaVencido() || l.getCantidadDisponible() == 0) continue;
+            if (elegido == null || l.getFechaVencimiento().isBefore(elegido.getFechaVencimiento())) elegido = l;
+        }
+        double costo = elegido == null ? 0 : elegido.getCostoUnitario();
+        return Math.round(costo * 1.5 * 100.0) / 100.0;
+    }
+
     public String getCodigo() {
         return codigo;
     }

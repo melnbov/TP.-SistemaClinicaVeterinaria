@@ -9,6 +9,7 @@ import java.util.List;
 public class Veterinario extends Personal{
     private final String matricula;
     private final String especialidad;
+    private boolean deGuardia;
     private final List<HorarioAtencion> horarios= new ArrayList<>();
     
     //constructor
@@ -37,6 +38,31 @@ public class Veterinario extends Personal{
         }
         return false;
     }
+    public boolean isDeGuardia() {
+        return deGuardia;
+    }
+
+    public void setDeGuardia(boolean deGuardia) {
+        this.deGuardia = deGuardia;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Veterinario)) return false;
+        return matricula.equals(((Veterinario) o).matricula);
+    }
+
+    @Override
+    public int hashCode() {
+        return matricula.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getNombreCompleto() + " (Mat. " + matricula + ", " + especialidad + ")";
+    }
+
     public String getMatricula() {
         return matricula;
     }

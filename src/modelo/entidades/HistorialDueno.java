@@ -3,7 +3,7 @@ package modelo.entidades;
 import modelo.excepciones.ReglaNegocioException;
 import java.time.LocalDate;
 
-public class HistorialDueno {
+public class HistorialDueno implements java.io.Serializable {
 
     private final Dueno dueno;
     private final LocalDate fechaDesde;

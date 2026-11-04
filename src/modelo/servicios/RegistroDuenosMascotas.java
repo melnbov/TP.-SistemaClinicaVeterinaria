@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import modelo.entidades.Perro;
 
-public class RegistroDuenosMascotas {
+public class RegistroDuenosMascotas implements java.io.Serializable {
 
     private final Map<String, Dueno> duenos = new HashMap<>();
     private final List<Mascota> mascotas = new ArrayList<>();
@@ -121,6 +121,11 @@ public class RegistroDuenosMascotas {
         }
 
         return lista;
+    }
+
+    /** Lista todas las mascotas ordenadas por nombre. */
+    public List<Mascota> listarMascotas() {
+        return listarMascotasPorNombre();
     }
 
     public List<Mascota> listarMascotasPorNombre() {

@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class Vacuna {
+public class Vacuna implements java.io.Serializable {
 
     private final String codigo;
     private final String nombre;

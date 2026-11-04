@@ -2,7 +2,7 @@ package modelo.entidades;
 
 import java.time.LocalDate;
 
-public class NotaRectificatoria {
+public class NotaRectificatoria implements java.io.Serializable {
 
     private final LocalDate fecha;
     private final String texto;

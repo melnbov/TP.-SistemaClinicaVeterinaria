@@ -11,6 +11,7 @@ public enum DiaSemana {
         if (dia == null) {
             throw new IllegalArgumentException("El día no puede ser nulo");
         }
-        return DiaSemana.valueOf(dia.name());
+        // Los nombres de java.time.DayOfWeek están en inglés: se mapea por posición (lunes = 1).
+        return DiaSemana.values()[dia.getValue() - 1];
     }
 }

@@ -1,6 +1,6 @@
 package modelo.entidades;
 
-public class Tratamiento {
+public class Tratamiento implements java.io.Serializable {
 
     private final Medicamento medicamento;
     private final String dosis;

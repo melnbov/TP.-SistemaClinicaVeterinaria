@@ -6,13 +6,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class Dueno implements Comparable<Dueno> {
+public class Dueno implements Comparable<Dueno>, java.io.Serializable {
 
     private final String nombre;
     private final String apellido;
     private final String documento;
     private String telefono;
     private String email;
+    private PlanSalud planSalud; // null = sin plan de salud animal
 
     private final List<Mascota> mascotas = new ArrayList<>();
 
@@ -81,6 +82,14 @@ public class Dueno implements Comparable<Dueno> {
 
     public String getEmail() {
         return email;
+    }
+
+    public PlanSalud getPlanSalud() {
+        return planSalud;
+    }
+
+    public void setPlanSalud(PlanSalud planSalud) {
+        this.planSalud = planSalud;
     }
 
     public void setTelefono(String telefono) {
