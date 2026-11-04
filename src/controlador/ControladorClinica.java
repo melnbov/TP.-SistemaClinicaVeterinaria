@@ -18,12 +18,17 @@ import java.util.*;
  */
 public class ControladorClinica {
     private final RepositorioArchivo repositorio;
-    private final Notificador notificador = new EmailNotificador();
+    private final Notificador notificador;
+    private final ServicioRecordatorios servicioRecordatorios;
     private DatosClinica datos;
     private String mensajeInicio = "";
 
-    public ControladorClinica(RepositorioArchivo repositorio) {
+    /** El {@link Notificador} se inyecta desde afuera (lo elige Main): el controlador no conoce Email ni SMS. */
+    public ControladorClinica(RepositorioArchivo repositorio, Notificador notificador) {
+        if (notificador == null) throw new IllegalArgumentException("Notificador obligatorio");
         this.repositorio = repositorio;
+        this.notificador = notificador;
+        this.servicioRecordatorios = new ServicioRecordatorios(notificador);
         cargarDatos();
     }
 
@@ -72,6 +77,7 @@ public class ControladorClinica {
 
     public List<Dueno> listarDuenos() { return datos.getRegistro().listarDuenos(); }
     public List<Mascota> listarMascotas() { return datos.getRegistro().listarMascotas(); }
+    public List<Mascota> listarMascotasDe(Dueno dueno) { return datos.getRegistro().listarMascotasDe(dueno); }
 
     public Mascota registrarMascota(Mascota mascota) throws ReglaNegocioException {
         datos.getRegistro().registrarMascota(mascota);
@@ -389,15 +395,18 @@ public class ControladorClinica {
     public List<Vacuna> listarCatalogoVacunas() { return Collections.unmodifiableList(datos.getCatalogoVacunas()); }
 
     public void enviarRecordatoriosVacunas() {
-        new ServicioRecordatorios(notificador).avisarVacunasProximas(listarMascotas(), LocalDate.now());
+        servicioRecordatorios.avisarVacunasProximas(listarMascotas(), LocalDate.now());
     }
 
-    public String reporteTurnos(Veterinario v) {
-        return new ReporteTurnosVeterinario(v == null ? listarTurnos() : listarTurnosDe(v)).generarReporte();
+    /** Ejecuta cualquier reporte a través de la abstracción {@link Reporte} (no conoce las clases concretas). */
+    public String emitirReporte(Reporte reporte) { return reporte.generarReporte(); }
+
+    public Reporte reporteTurnos(Veterinario v) {
+        return new ReporteTurnosVeterinario(v == null ? listarTurnos() : listarTurnosDe(v));
     }
-    public String reporteStockBajo() { return new ReporteStockBajo(listarProductos()).generarReporte(); }
-    public String reporteVacunasProximas() {
-        return new ReporteVacunasProximas(listarMascotas(), LocalDate.now()).generarReporte();
+    public Reporte reporteStockBajo() { return new ReporteStockBajo(datos.getServicioStock()); }
+    public Reporte reporteVacunasProximas() {
+        return new ReporteVacunasProximas(servicioRecordatorios, listarMascotas(), LocalDate.now());
     }
 
     // ---------------------------------------------------------------- utilidades

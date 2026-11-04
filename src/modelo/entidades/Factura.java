@@ -40,34 +40,27 @@ public class Factura implements Serializable {
         }
         return calcularSubtotal()* plan.getPorcentajeDescuento()/100.0;
     }
-    public double calcularRecargo(){
-        return 0;
-    }
     public double calcularTotal(PlanSalud plan){
         return calcularSubtotal()- calcularDescuento(plan);}
 
+    /** Total a pagar con el medio indicado: la factura delega la regla en el propio medio (sin instanceof). */
     public double calcularTotal(PlanSalud plan,MedioPago medio){
         if (medio == null) {
             throw new IllegalArgumentException("El medio de pago es obligatorio");
         }
-        double subtotal = calcularSubtotal();
-        double porcentajePlan = plan == null
-                ? 0 : plan.getPorcentajeDescuento();
+        double porcentajePlan = plan == null ? 0 : plan.getPorcentajeDescuento();
+        return medio.calcularTotal(calcularSubtotal(), porcentajePlan);
+    }
 
-        // El descuento del plan y el de efectivo no se acumulan.
-        double porcentajeDescuento = porcentajePlan;
-        if (medio instanceof Efectivo) {
-            porcentajeDescuento = Math.max(porcentajePlan, 10);
+    /**
+     * Diferencia que produjo el medio de pago ya registrado en esta factura respecto del total con
+     * plan de salud (positiva = recargo, negativa = descuento adicional). 0 si todavía no se pagó.
+     */
+    public double calcularAjusteMedioPago(PlanSalud plan){
+        if (pago == null) {
+            return 0;
         }
-        double total = subtotal - (subtotal * porcentajeDescuento / 100.0);
-
-        // Para debito el recargo es 0 y para credito es 8%.
-        // Efectivo ya fue contemplado en el descuento mayor, por eso no se acumula.
-        if (!(medio instanceof Efectivo)) {
-            total += medio.calcularRecargo(total);
-        }
-
-        return Math.max(0, total);
+        return calcularTotal(plan, pago.getMedioPago()) - calcularTotal(plan);
     }
     public void registrarPago(Pago pago){
         validarEditable();

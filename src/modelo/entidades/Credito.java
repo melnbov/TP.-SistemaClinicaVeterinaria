@@ -10,7 +10,9 @@ public class Credito implements Serializable, MedioPago {
             throw new IllegalArgumentException("Las cuotas deben ser positivas");
         this.cantidadCuotas=cantidadCuotas;}
 
-    public double calcularRecargo(double subtotal){return subtotal*0.08;}
+    @Override
+    public double calcularRecargo(double importeConDescuento){return importeConDescuento*0.08;}
+    @Override
     public String getNombre(){return "Crédito";}
     public int getCantidadCuotas(){
         return cantidadCuotas;}

@@ -72,7 +72,6 @@ public class RegistroDuenosMascotas implements java.io.Serializable {
                     "El dueño de la mascota no está registrado");
         }
 
-        dueno.registrarMascota(mascota);
         mascotas.add(mascota);
     }
 
@@ -121,6 +120,19 @@ public class RegistroDuenosMascotas implements java.io.Serializable {
         }
 
         return lista;
+    }
+
+    /** Mascotas cuyo dueño actual es el indicado (se consulta acá; el dueño no guarda su lista de mascotas). */
+    public List<Mascota> listarMascotasDe(Dueno dueno) {
+        List<Mascota> resultado = new ArrayList<>();
+
+        for (Mascota mascota : listarMascotasPorNombre()) {
+            if (mascota.getDuenoActual().equals(dueno)) {
+                resultado.add(mascota);
+            }
+        }
+
+        return resultado;
     }
 
     /** Lista todas las mascotas ordenadas por nombre. */

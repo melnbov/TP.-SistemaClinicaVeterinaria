@@ -3,6 +3,8 @@ package vista;
 import controlador.ControladorClinica;
 import modelo.entidades.*;
 import modelo.excepciones.ReglaNegocioException;
+import modelo.servicios.Notificador;
+import modelo.servicios.Reporte;
 import modelo.servicios.ServicioTurnos;
 import persistencia.RepositorioArchivo;
 
@@ -24,10 +26,10 @@ public class MenuConsola {
     private final Scanner sc = new Scanner(System.in);
     private final ControladorClinica controlador;
 
-    public MenuConsola() {
+    public MenuConsola(Notificador notificador) {
         // El archivo de datos se puede cambiar con -Dclinica.archivo=ruta
         String ruta = System.getProperty("clinica.archivo", "datos/clinica.dat");
-        this.controlador = new ControladorClinica(new RepositorioArchivo(Paths.get(ruta)));
+        this.controlador = new ControladorClinica(new RepositorioArchivo(Paths.get(ruta)), notificador);
     }
 
     public void iniciar() {
@@ -165,7 +167,7 @@ public class MenuConsola {
                 case 1: ejecutar(() -> solicitarTurno(dueno)); break;
                 case 2: mostrar(turnosDe(dueno, false)); break;
                 case 3: ejecutar(() -> modificarTurno(dueno)); break;
-                case 4: mostrar(dueno.getMascotas()); break;
+                case 4: mostrar(controlador.listarMascotasDe(dueno)); break;
                 case 5: ejecutar(() -> registrarMascotaDe(dueno)); break;
                 case 0: break;
                 default: System.out.println("Opción incorrecta.");
@@ -176,7 +178,7 @@ public class MenuConsola {
     // ------------------------------------------------------------------ acciones del dueño
 
     private void solicitarTurno(Dueno dueno) throws ReglaNegocioException {
-        Mascota m = elegir("Tu mascota", dueno.getMascotas());
+        Mascota m = elegir("Tu mascota", controlador.listarMascotasDe(dueno));
         if (m == null) return;
         Veterinario v = elegir("Veterinario", controlador.listarVeterinarios());
         if (v == null) return;
@@ -293,7 +295,7 @@ public class MenuConsola {
                 case 2: ejecutar(() -> { controlador.registrarMedicamento(leerTexto("Código: "), leerTexto("Nombre: "), leerEntero("Stock mínimo: "), leerTexto("Principio activo: "), leerTexto("Presentación: ")); System.out.println("Medicamento registrado."); }); break;
                 case 3: ejecutar(() -> { controlador.registrarInsumo(leerTexto("Código: "), leerTexto("Nombre: "), leerEntero("Stock mínimo: "), leerTexto("Unidad de medida: ")); System.out.println("Insumo registrado."); }); break;
                 case 4: ejecutar(() -> { controlador.ingresarLote(leerTexto("Código del producto: "), leerTexto("N° de lote: "), leerFecha("Vencimiento (aaaa-mm-dd): "), leerEntero("Cantidad: "), leerDecimal("Costo unitario: ")); System.out.println("Lote ingresado."); }); break;
-                case 5: System.out.print(controlador.reporteStockBajo()); break;
+                case 5: emitir(controlador.reporteStockBajo()); break;
                 case 0: break;
                 default: System.out.println("Opción incorrecta.");
             }
@@ -325,11 +327,15 @@ public class MenuConsola {
             switch (op) {
                 case 1: mostrar(controlador.listarCatalogoVacunas()); break;
                 case 2: controlador.enviarRecordatoriosVacunas(); System.out.println("Recordatorios procesados."); break;
-                case 3: System.out.print(controlador.reporteVacunasProximas()); break;
+                case 3: emitir(controlador.reporteVacunasProximas()); break;
                 case 0: break;
                 default: System.out.println("Opción incorrecta.");
             }
         } while (op != 0);
+    }
+
+    private void emitir(Reporte reporte) {
+        System.out.print(controlador.emitirReporte(reporte));
     }
 
     private void menuReportes() {
@@ -339,10 +345,10 @@ public class MenuConsola {
             System.out.println("1. Turnos de un veterinario\n2. Todos los turnos\n3. Productos con stock bajo\n4. Vacunas próximas a vencer\n0. Volver");
             op = leerEntero("Opción: ");
             switch (op) {
-                case 1: ejecutar(() -> { Veterinario v = elegir("Veterinario", controlador.listarVeterinarios()); if (v != null) System.out.print(controlador.reporteTurnos(v)); }); break;
-                case 2: System.out.print(controlador.reporteTurnos(null)); break;
-                case 3: System.out.print(controlador.reporteStockBajo()); break;
-                case 4: System.out.print(controlador.reporteVacunasProximas()); break;
+                case 1: ejecutar(() -> { Veterinario v = elegir("Veterinario", controlador.listarVeterinarios()); if (v != null) emitir(controlador.reporteTurnos(v)); }); break;
+                case 2: emitir(controlador.reporteTurnos(null)); break;
+                case 3: emitir(controlador.reporteStockBajo()); break;
+                case 4: emitir(controlador.reporteVacunasProximas()); break;
                 case 0: break;
                 default: System.out.println("Opción incorrecta.");
             }
@@ -584,6 +590,10 @@ public class MenuConsola {
         System.out.printf("   Subtotal: $%.2f%n", f.calcularSubtotal());
         PlanSalud plan = controlador.planDe(f);
         if (plan != null) System.out.println("   Plan de salud: " + plan.getNombre() + " (" + plan.getPorcentajeDescuento() + "% de descuento)");
+        if (f.getPago() != null) {
+            System.out.printf("   Medio de pago: %s (ajuste $%.2f)  -  Total pagado: $%.2f%n",
+                    f.getPago().getMedioPago().getNombre(), f.calcularAjusteMedioPago(plan), f.getPago().getImporte());
+        }
     }
 
     // ------------------------------------------------------------------ utilidades de interfaz

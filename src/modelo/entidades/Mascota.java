@@ -79,27 +79,9 @@ public abstract class Mascota implements java.io.Serializable {
                     "La fecha no puede ser anterior al inicio de la tenencia");
         }
 
-        Dueno duenoAnterior = duenoActual;
-        boolean estabaRegistrada =
-                duenoAnterior.getMascotas().contains(this);
-
-        if (estabaRegistrada && nuevoDueno.getMascotas().contains(this)) {
-            throw new ReglaNegocioException(
-                    "La mascota ya está registrada para el nuevo dueño");
-        }
-
         vigente.cerrar(fecha);
-
-        if (estabaRegistrada) {
-            duenoAnterior.quitarMascota(this);
-        }
-
         duenoActual = nuevoDueno;
         historialDuenos.add(new HistorialDueno(nuevoDueno, fecha));
-
-        if (estabaRegistrada) {
-            nuevoDueno.registrarMascota(this);
-        }
     }
 
     public Consulta registrarConsulta(Veterinario veterinario, String motivo) {

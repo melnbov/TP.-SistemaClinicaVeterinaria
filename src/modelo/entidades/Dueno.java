@@ -1,9 +1,5 @@
 package modelo.entidades;
 
-import modelo.excepciones.ReglaNegocioException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 public class Dueno implements Comparable<Dueno>, java.io.Serializable {
@@ -14,8 +10,6 @@ public class Dueno implements Comparable<Dueno>, java.io.Serializable {
     private String telefono;
     private String email;
     private PlanSalud planSalud; // null = sin plan de salud animal
-
-    private final List<Mascota> mascotas = new ArrayList<>();
 
     public Dueno(String nombre, String apellido, String documento,
                  String telefono, String email) {
@@ -34,34 +28,6 @@ public class Dueno implements Comparable<Dueno>, java.io.Serializable {
         }
 
         return valor.trim();
-    }
-
-    public void registrarMascota(Mascota mascota) throws ReglaNegocioException {
-        if (mascota == null) {
-            throw new ReglaNegocioException("La mascota no puede ser nula");
-        }
-
-        if (!this.equals(mascota.getDuenoActual())) {
-            throw new ReglaNegocioException(
-                    "La mascota " + mascota.getNombre()
-                            + " no pertenece a este dueño");
-        }
-
-        if (mascotas.contains(mascota)) {
-            throw new ReglaNegocioException(
-                    "La mascota " + mascota.getNombre()
-                            + " ya está registrada para este dueño");
-        }
-
-        mascotas.add(mascota);
-    }
-
-    boolean quitarMascota(Mascota mascota) {
-        return mascotas.remove(mascota);
-    }
-
-    public List<Mascota> getMascotas() {
-        return Collections.unmodifiableList(mascotas);
     }
 
     public String getNombre() {
