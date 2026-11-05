@@ -3,10 +3,10 @@ package modelo.entidades;
 
 public abstract class Personal implements java.io.Serializable {
     //atributos
-    private String nombre;
-    private String apellido;
-    private String documento;
-    private String telefono;
+    protected String nombre;
+    protected String apellido;
+    protected String documento;
+    protected String telefono;
     
     //constructor
 

@@ -6,9 +6,9 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class Producto implements Serializable {
-    private final String codigo;
-    private final String nombre;
-    private final int stockMinimo;
+    protected final String codigo;
+    protected final String nombre;
+    protected final int stockMinimo;
     private final List<LoteProducto> lotes = new ArrayList<>();
 
     protected Producto(String codigo, String nombre, int stockMinimo) {

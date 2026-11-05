@@ -134,6 +134,8 @@ TP.-SistemaClinicaVeterinaria/
 ├── docs/
 │   ├── Documentacion del Sistema de Clinica Veterinaria.pdf
 │   └── uml/
+│   └── Informe final
+
 └── README.md
 ```
 
@@ -185,7 +187,7 @@ TP.-SistemaClinicaVeterinaria/
 
 ### Otras carpetas
 - `datos/`: archivo `clinica.dat` con la información guardada.
-- `docs/`: documentación del sistema y diagramas UML (`docs/uml/`: clases inicial y modificado, casos de uso y secuencia).
+- `docs/`: documentación del sistema, informe final  y diagramas UML (`docs/uml/`: clases inicial y modificado, casos de uso y secuencia).
 - `out/`: clases compiladas por IntelliJ (se regenera al compilar, no se edita).
 
 ## Supuestos documentados (el enunciado no los define)

@@ -9,11 +9,11 @@ import java.util.List;
 
 public abstract class Mascota implements java.io.Serializable {
 
-    private final String nombre;
-    private final String raza;
-    private final String sexo;
-    private final LocalDate fechaNacimiento;
-    private double pesoActual;
+    protected final String nombre;
+    protected final String raza;
+    protected final String sexo;
+    protected final LocalDate fechaNacimiento;
+    protected double pesoActual;
     private Dueno duenoActual;
 
     private final List<HistorialDueno> historialDuenos = new ArrayList<>();
