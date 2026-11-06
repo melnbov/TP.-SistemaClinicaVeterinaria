@@ -23,7 +23,9 @@ public class ControladorClinica {
     private DatosClinica datos;
     private String mensajeInicio = "";
 
-    /** El {@link Notificador} se inyecta desde afuera (lo elige Main): el controlador no conoce Email ni SMS. */
+    /**
+     * El {@link Notificador} se inyecta desde afuera (lo elige Main): el controlador no conoce Email ni SMS.
+     */
     public ControladorClinica(RepositorioArchivo repositorio, Notificador notificador) {
         if (notificador == null) throw new IllegalArgumentException("Notificador obligatorio");
         this.repositorio = repositorio;
@@ -32,7 +34,9 @@ public class ControladorClinica {
         cargarDatos();
     }
 
-    /** Carga el archivo si existe; si no existe (o está dañado) arranca con los datos iniciales. */
+    /**
+     * Carga el archivo si existe; si no existe (o está dañado) arranca con los datos iniciales.
+     */
     private void cargarDatos() {
         try {
             datos = repositorio.cargar();
@@ -50,7 +54,9 @@ public class ControladorClinica {
         guardar();
     }
 
-    public String getMensajeInicio() { return mensajeInicio; }
+    public String getMensajeInicio() {
+        return mensajeInicio;
+    }
 
     private void guardar() {
         try {
@@ -75,9 +81,17 @@ public class ControladorClinica {
         return datos.getRegistro().buscarDueno(documento).orElse(null);
     }
 
-    public List<Dueno> listarDuenos() { return datos.getRegistro().listarDuenos(); }
-    public List<Mascota> listarMascotas() { return datos.getRegistro().listarMascotas(); }
-    public List<Mascota> listarMascotasDe(Dueno dueno) { return datos.getRegistro().listarMascotasDe(dueno); }
+    public List<Dueno> listarDuenos() {
+        return datos.getRegistro().listarDuenos();
+    }
+
+    public List<Mascota> listarMascotas() {
+        return datos.getRegistro().listarMascotas();
+    }
+
+    public List<Mascota> listarMascotasDe(Dueno dueno) {
+        return datos.getRegistro().listarMascotasDe(dueno);
+    }
 
     public Mascota registrarMascota(Mascota mascota) throws ReglaNegocioException {
         datos.getRegistro().registrarMascota(mascota);
@@ -89,14 +103,17 @@ public class ControladorClinica {
                             Dueno dueno, String chip, double tamanio) throws ReglaNegocioException {
         return crear(() -> new Perro(nombre, raza, sexo, nacimiento, peso, dueno, chip, tamanio));
     }
+
     public Gato nuevoGato(String nombre, String raza, String sexo, LocalDate nacimiento, double peso,
                           Dueno dueno, EstiloVida vida) throws ReglaNegocioException {
         return crear(() -> new Gato(nombre, raza, sexo, nacimiento, peso, dueno, vida));
     }
+
     public Ave nuevaAve(String nombre, String raza, String sexo, LocalDate nacimiento, double peso,
                         Dueno dueno, boolean vuela) throws ReglaNegocioException {
         return crear(() -> new Ave(nombre, raza, sexo, nacimiento, peso, dueno, vuela));
     }
+
     public Conejo nuevoConejo(String nombre, String raza, String sexo, LocalDate nacimiento, double peso,
                               Dueno dueno) throws ReglaNegocioException {
         return crear(() -> new Conejo(nombre, raza, sexo, nacimiento, peso, dueno));
@@ -133,11 +150,44 @@ public class ControladorClinica {
         guardar();
         return v;
     }
-    /** Busca a un integrante del personal por documento (para el ingreso al sistema). */
+
+    /**
+     * Registra un veterinario con un horario independiente para cada día de atención.
+     */
+    public Veterinario registrarVeterinario(String nombre, String apellido, String documento, String telefono,
+                                            String matricula, String especialidad, boolean deGuardia,
+                                            List<HorarioAtencion> horarios) throws ReglaNegocioException {
+        if (buscarPersonal(documento) != null) {
+            throw new ReglaNegocioException("Ya existe un integrante del personal con ese documento");
+        }
+        if (horarios == null || horarios.isEmpty()) {
+            throw new ReglaNegocioException("Debe cargar al menos un horario de atención");
+        }
+        for (Veterinario existente : listarVeterinarios()) {
+            if (existente.getMatricula().equalsIgnoreCase(matricula == null ? "" : matricula.trim())) {
+                throw new ReglaNegocioException("Ya existe un veterinario con esa matrícula");
+            }
+        }
+        Veterinario veterinario = crear(() -> {
+            Veterinario nuevo = new Veterinario(nombre, apellido, documento, telefono,
+                    matricula == null ? null : matricula.trim(), especialidad);
+            nuevo.setDeGuardia(deGuardia);
+            for (HorarioAtencion horario : horarios) nuevo.agregarHorario(horario);
+            return nuevo;
+        });
+        datos.getPersonal().add(veterinario);
+        guardar();
+        return veterinario;
+    }
+
+    /**
+     * Busca a un integrante del personal por documento (para el ingreso al sistema).
+     */
     public Personal buscarPersonal(String documento) {
         for (Personal p : datos.getPersonal()) if (p.getDocumento().equals(documento)) return p;
         return null;
     }
+
     public List<Veterinario> listarVeterinarios() {
         List<Veterinario> r = new ArrayList<>();
         for (Personal p : datos.getPersonal()) if (p instanceof Veterinario) r.add((Veterinario) p);
@@ -166,7 +216,9 @@ public class ControladorClinica {
         guardar();
     }
 
-    /** @return el cargo por cancelación tardía (0 si no corresponde) */
+    /**
+     * @return el cargo por cancelación tardía (0 si no corresponde)
+     */
     public double cancelarTurno(int numero) throws ReglaNegocioException {
         double cargo = datos.getServicioTurnos().cancelarTurno(numero, LocalDateTime.now());
         guardar();
@@ -177,20 +229,28 @@ public class ControladorClinica {
         datos.getServicioTurnos().registrarAusencia(numero);
         guardar();
     }
-    /** Próximos días (a partir de hoy) en los que el veterinario atiende. */
+
+    /**
+     * Próximos días (a partir de hoy) en los que el veterinario atiende.
+     */
     public List<LocalDate> diasDeAtencion(Veterinario v, int cantidadDias) {
         List<LocalDate> r = new ArrayList<>();
         LocalDate dia = LocalDate.now();
         for (int i = 0; i < cantidadDias; i++, dia = dia.plusDays(1)) {
             DiaSemana ds = DiaSemana.desdeFecha(dia.getDayOfWeek());
             for (HorarioAtencion h : v.getHorarios()) {
-                if (h.getDiaSemana() == ds) { r.add(dia); break; }
+                if (h.getDiaSemana() == ds) {
+                    r.add(dia);
+                    break;
+                }
             }
         }
         return r;
     }
 
-    /** Horarios libres de un veterinario en un día para una atención (grilla de 30', o 15' si la atención dura 15'). */
+    /**
+     * Horarios libres de un veterinario en un día para una atención (grilla de 30', o 15' si la atención dura 15').
+     */
     public List<LocalDateTime> horariosLibres(Veterinario v, LocalDate dia, TipoAtencion tipo, Turno excluir) {
         List<LocalDateTime> r = new ArrayList<>();
         int paso = Math.min(tipo.getDuracionMinutos(), 30);
@@ -200,14 +260,19 @@ public class ControladorClinica {
             LocalDateTime fin = t.plusMinutes(tipo.getDuracionMinutos());
             boolean ocupado = false;
             for (Turno e : turnosReservados(v, dia)) {
-                if (e != excluir && t.isBefore(e.getFin()) && e.getInicio().isBefore(fin)) { ocupado = true; break; }
+                if (e != excluir && t.isBefore(e.getFin()) && e.getInicio().isBefore(fin)) {
+                    ocupado = true;
+                    break;
+                }
             }
             if (!ocupado) r.add(t);
         }
         return r;
     }
 
-    /** Turnos programados (reservados) de un veterinario en un día, ordenados por hora. */
+    /**
+     * Turnos programados (reservados) de un veterinario en un día, ordenados por hora.
+     */
     public List<Turno> turnosReservados(Veterinario v, LocalDate dia) {
         List<Turno> r = new ArrayList<>();
         for (Turno t : listarTurnosDe(v)) {
@@ -215,13 +280,24 @@ public class ControladorClinica {
         }
         return r;
     }
-    public boolean requiereSena(Dueno dueno) { return datos.getServicioTurnos().requiereSena(dueno); }
-    public List<Turno> listarTurnos() { return datos.getServicioTurnos().listarTurnos(); }
-    public List<Turno> listarTurnosDe(Veterinario v) { return datos.getServicioTurnos().listarTurnosPorVeterinario(v); }
+
+    public boolean requiereSena(Dueno dueno) {
+        return datos.getServicioTurnos().requiereSena(dueno);
+    }
+
+    public List<Turno> listarTurnos() {
+        return datos.getServicioTurnos().listarTurnos();
+    }
+
+    public List<Turno> listarTurnosDe(Veterinario v) {
+        return datos.getServicioTurnos().listarTurnosPorVeterinario(v);
+    }
 
     // ---------------------------------------------------------------- atención clínica
 
-    /** Marca el turno como atendido y abre la consulta en la historia clínica de la mascota. */
+    /**
+     * Marca el turno como atendido y abre la consulta en la historia clínica de la mascota.
+     */
     public Consulta atenderTurno(int numeroTurno, String motivo) throws ReglaNegocioException {
         Turno turno = datos.getServicioTurnos().buscarPorNumero(numeroTurno);
         if (turno.getEstado() != EstadoTurno.PROGRAMADO)
@@ -288,7 +364,8 @@ public class ControladorClinica {
      */
     public Factura confirmarConsulta(Consulta c) throws ReglaNegocioException {
         if (c.estaCerrada()) throw new ReglaNegocioException("La consulta ya está cerrada");
-        if (c.getDiagnostico() == null) throw new ReglaNegocioException("No se puede cerrar la consulta sin un diagnóstico");
+        if (c.getDiagnostico() == null)
+            throw new ReglaNegocioException("No se puede cerrar la consulta sin un diagnóstico");
 
         // 1) Cantidades necesarias por producto y precios (antes de descontar, porque el precio sale del lote).
         Map<String, Integer> necesarios = new LinkedHashMap<>();
@@ -325,21 +402,29 @@ public class ControladorClinica {
         guardar();
     }
 
-    public List<Consulta> historiaClinica(Mascota m) { return m.getHistoriaClinica(); }
+    public List<Consulta> historiaClinica(Mascota m) {
+        return m.getHistoriaClinica();
+    }
 
     // ---------------------------------------------------------------- stock
 
     public Producto registrarMedicamento(String codigo, String nombre, int minimo, String principio, String presentacion)
             throws ReglaNegocioException {
         Medicamento m = crear(() -> new Medicamento(codigo, nombre, minimo, principio, presentacion));
-        crear(() -> { datos.getServicioStock().registrarProducto(m); return m; });
+        crear(() -> {
+            datos.getServicioStock().registrarProducto(m);
+            return m;
+        });
         guardar();
         return m;
     }
 
     public Producto registrarInsumo(String codigo, String nombre, int minimo, String unidad) throws ReglaNegocioException {
         Insumo i = crear(() -> new Insumo(codigo, nombre, minimo, unidad));
-        crear(() -> { datos.getServicioStock().registrarProducto(i); return i; });
+        crear(() -> {
+            datos.getServicioStock().registrarProducto(i);
+            return i;
+        });
         guardar();
         return i;
     }
@@ -354,12 +439,19 @@ public class ControladorClinica {
         guardar();
     }
 
-    public List<Producto> listarProductos() { return datos.getServicioStock().getProductos(); }
-    public List<Producto> productosStockBajo() { return datos.getServicioStock().consultarStockBajo(); }
+    public List<Producto> listarProductos() {
+        return datos.getServicioStock().getProductos();
+    }
+
+    public List<Producto> productosStockBajo() {
+        return datos.getServicioStock().consultarStockBajo();
+    }
 
     // ---------------------------------------------------------------- facturación
 
-    public List<Factura> listarFacturas() { return Collections.unmodifiableList(datos.getFacturas()); }
+    public List<Factura> listarFacturas() {
+        return Collections.unmodifiableList(datos.getFacturas());
+    }
 
     public Factura buscarFactura(int numero) throws ReglaNegocioException {
         for (Factura f : datos.getFacturas()) if (f.getNumero() == numero) return f;
@@ -376,6 +468,12 @@ public class ControladorClinica {
 
     public void pagarFactura(int numero, MedioPago medio) throws ReglaNegocioException {
         Factura f = buscarFactura(numero);
+        if (f.getEstado() != EstadoFactura.EMITIDA || f.getPago() != null) {
+            throw new ReglaNegocioException("La factura no está pendiente de pago. No se puede cobrar nuevamente.");
+        }
+        if (medio == null) {
+            throw new ReglaNegocioException("Debe seleccionar un medio de pago.");
+        }
         crear(() -> {
             f.registrarPago(new Pago(LocalDate.now(), f.calcularTotal(planDe(f), medio), medio));
             return null;
@@ -392,26 +490,38 @@ public class ControladorClinica {
 
     // ---------------------------------------------------------------- vacunas y reportes
 
-    public List<Vacuna> listarCatalogoVacunas() { return Collections.unmodifiableList(datos.getCatalogoVacunas()); }
+    public List<Vacuna> listarCatalogoVacunas() {
+        return Collections.unmodifiableList(datos.getCatalogoVacunas());
+    }
 
     public void enviarRecordatoriosVacunas() {
         servicioRecordatorios.avisarVacunasProximas(listarMascotas(), LocalDate.now());
     }
 
-    /** Ejecuta cualquier reporte a través de la abstracción {@link Reporte} (no conoce las clases concretas). */
-    public String emitirReporte(Reporte reporte) { return reporte.generarReporte(); }
+    /**
+     * Ejecuta cualquier reporte a través de la abstracción {@link Reporte} (no conoce las clases concretas).
+     */
+    public String emitirReporte(Reporte reporte) {
+        return reporte.generarReporte();
+    }
 
     public Reporte reporteTurnos(Veterinario v) {
         return new ReporteTurnosVeterinario(v == null ? listarTurnos() : listarTurnosDe(v));
     }
-    public Reporte reporteStockBajo() { return new ReporteStockBajo(datos.getServicioStock()); }
+
+    public Reporte reporteStockBajo() {
+        return new ReporteStockBajo(datos.getServicioStock());
+    }
+
     public Reporte reporteVacunasProximas() {
         return new ReporteVacunasProximas(servicioRecordatorios, listarMascotas(), LocalDate.now());
     }
 
     // ---------------------------------------------------------------- utilidades
 
-    /** Ejecuta una construcción del modelo y convierte las validaciones (IllegalArgument/State) en ReglaNegocioException. */
+    /**
+     * Ejecuta una construcción del modelo y convierte las validaciones (IllegalArgument/State) en ReglaNegocioException.
+     */
     private <T> T crear(java.util.function.Supplier<T> accion) throws ReglaNegocioException {
         try {
             return accion.get();
